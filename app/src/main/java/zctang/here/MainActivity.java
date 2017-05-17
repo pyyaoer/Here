@@ -31,6 +31,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
     MsgAdapter msgAdapter;
     private ListView mListView;
     private SwipeRefreshLayout mSwipeRefreshLayout;
+    private GPSHandler gpsHandler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,6 +39,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        gpsHandler = new GPSHandler(this);
 
         mSwipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.include);
         mSwipeRefreshLayout.setOnRefreshListener(this);
@@ -84,12 +86,6 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 
     @Override
     public void onRefresh() {
-/*
-        mSwipeRefreshLayout.setRefreshing(true);
-        msgAdapter.add(new Msg("Third", "3:00", "upvote"));
-        msgAdapter.notifyDataSetChanged();
-        mSwipeRefreshLayout.setRefreshing(false);
-*/
         new GetMsgs().execute();
     }
 
@@ -185,6 +181,8 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                     }
                 }
             }
+            // TODO: show Location information in the last Msg
+            msgAdapter.add(new Msg(gpsHandler.getLastKnownLocation().toString(), "0:00", "0"));
             msgAdapter.notifyDataSetChanged();
             mSwipeRefreshLayout.setRefreshing(false);
         }
