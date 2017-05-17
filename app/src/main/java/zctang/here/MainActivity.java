@@ -1,6 +1,7 @@
 package zctang.here;
 
 import android.content.Context;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.LayoutRes;
 import android.support.annotation.NonNull;
@@ -18,9 +19,14 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 
 public class MainActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener {
 
+    // Fill in the URL of server
     private static String mURL = "";
     MsgAdapter msgAdapter;
     private ListView mListView;
@@ -78,10 +84,13 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 
     @Override
     public void onRefresh() {
+/*
         mSwipeRefreshLayout.setRefreshing(true);
         msgAdapter.add(new Msg("Third", "3:00", "upvote"));
         msgAdapter.notifyDataSetChanged();
         mSwipeRefreshLayout.setRefreshing(false);
+*/
+        new GetMsgs().execute();
     }
 
     class MsgAdapter extends ArrayAdapter<Msg> {
@@ -132,6 +141,52 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 
         public String getUpvote() {
             return upvote;
+        }
+    }
+
+    private class GetMsgs extends AsyncTask<Void, Void, Void> {
+
+        private JSONArray jsonArray = null;
+
+        @Override
+        protected void onPreExecute() {
+            mSwipeRefreshLayout.setRefreshing(true);
+        }
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            HttpHandler httpHandler = new HttpHandler();
+            String jsonStr = httpHandler.makeServiceCall(mURL);
+
+            if (jsonStr != null) {
+                try {
+                    jsonArray = new JSONArray(jsonStr);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void result) {
+            super.onPostExecute(result);
+            if (jsonArray != null) {
+                msgAdapter.clear();
+                for (int i = 0; i < jsonArray.length(); i++) {
+                    try {
+                        JSONObject jsonObject = jsonArray.getJSONObject(i);
+                        msgAdapter.add(new Msg(jsonObject.getString("content"),
+                                jsonObject.getString("time"),
+                                jsonObject.getString("upvote")));
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            msgAdapter.notifyDataSetChanged();
+            mSwipeRefreshLayout.setRefreshing(false);
         }
     }
 }

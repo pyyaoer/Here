@@ -32,10 +32,10 @@ public class HttpHandler {
         String response = null;
         try {
             URL url = new URL(reqUrl);
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("GET");
+            HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
+            httpURLConnection.setRequestMethod("GET");
             // read the response
-            InputStream in = new BufferedInputStream(conn.getInputStream());
+            InputStream in = new BufferedInputStream(httpURLConnection.getInputStream());
             response = convertStreamToString(in);
         } catch (MalformedURLException e) {
             Log.e(TAG, "MalformedURLException: " + e.getMessage());
