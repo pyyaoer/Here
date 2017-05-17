@@ -1,15 +1,23 @@
 package zctang.here;
 
+import android.Manifest;
 import android.content.Context;
+import android.content.pm.PackageManager;
+import android.location.Criteria;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.LayoutRes;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -29,9 +37,33 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
     // Fill in the URL of server
     private static String mURL = "";
     MsgAdapter msgAdapter;
+    String bestProvider;
+    private String TAG = MainActivity.class.getSimpleName();
     private ListView mListView;
     private SwipeRefreshLayout mSwipeRefreshLayout;
-    private GPSHandler gpsHandler;
+    private Location currentLocation;
+    private final LocationListener locationListener = new LocationListener() {
+        @Override
+        public void onLocationChanged(Location location) {
+            currentLocation = location;
+            double latitude = location.getLatitude();
+            double longitude = location.getLongitude();
+            Log.v(TAG, "IN ON LOCATION CHANGE, lat=" + latitude + ", lon=" + longitude);
+        }
+
+        @Override
+        public void onStatusChanged(String provider, int status, Bundle extras) {
+        }
+
+        @Override
+        public void onProviderEnabled(String provider) {
+        }
+
+        @Override
+        public void onProviderDisabled(String provider) {
+        }
+    };
+    private LocationManager locationManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,7 +71,25 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        gpsHandler = new GPSHandler(this);
+
+        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            Log.e(TAG, "Permission check failed: Network | GPS");
+            return;
+        } else {
+            Criteria criteria = new Criteria();
+            criteria.setAccuracy(Criteria.ACCURACY_FINE);
+            bestProvider = locationManager.getBestProvider(criteria, false);
+            locationManager.requestLocationUpdates(bestProvider, 1000, 1, locationListener);
+        }
 
         mSwipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.include);
         mSwipeRefreshLayout.setOnRefreshListener(this);
@@ -60,6 +110,40 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                         .setAction("Action", null).show();
             }
         });
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (locationManager != null) {
+            locationManager.removeUpdates(locationListener);
+            locationManager = null;
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            Log.e(TAG, "Permission check failed: Network | GPS");
+            return;
+        }
+        locationManager.requestLocationUpdates(bestProvider, 10000, 1, locationListener);
+        currentLocation = locationManager.getLastKnownLocation(bestProvider);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        locationManager.removeUpdates(locationListener);
     }
 
     @Override
@@ -182,7 +266,9 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                 }
             }
             // TODO: show Location information in the last Msg
-            msgAdapter.add(new Msg(gpsHandler.getLastKnownLocation().toString(), "0:00", "0"));
+            if (currentLocation != null) {
+                msgAdapter.add(new Msg(currentLocation.toString(), "0:00", "0"));
+            }
             msgAdapter.notifyDataSetChanged();
             mSwipeRefreshLayout.setRefreshing(false);
         }
