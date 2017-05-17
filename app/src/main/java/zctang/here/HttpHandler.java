@@ -39,12 +39,16 @@ public class HttpHandler {
             response = convertStreamToString(in);
         } catch (MalformedURLException e) {
             Log.e(TAG, "MalformedURLException: " + e.getMessage());
+            return "MalformedURLException: ";
         } catch (ProtocolException e) {
             Log.e(TAG, "ProtocolException: " + e.getMessage());
+            return "ProtocolException: ";
         } catch (IOException e) {
             Log.e(TAG, "IOException: " + e.getMessage());
+            return "IOException: ";
         } catch (Exception e) {
             Log.e(TAG, "Exception: " + e.getMessage());
+            return "Exception";
         }
         return response;
     }
