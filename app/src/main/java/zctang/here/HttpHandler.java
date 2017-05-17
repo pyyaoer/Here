@@ -32,19 +32,23 @@ public class HttpHandler {
         String response = null;
         try {
             URL url = new URL(reqUrl);
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("GET");
+            HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
+            httpURLConnection.setRequestMethod("GET");
             // read the response
-            InputStream in = new BufferedInputStream(conn.getInputStream());
+            InputStream in = new BufferedInputStream(httpURLConnection.getInputStream());
             response = convertStreamToString(in);
         } catch (MalformedURLException e) {
             Log.e(TAG, "MalformedURLException: " + e.getMessage());
+            return "MalformedURLException: ";
         } catch (ProtocolException e) {
             Log.e(TAG, "ProtocolException: " + e.getMessage());
+            return "ProtocolException: ";
         } catch (IOException e) {
             Log.e(TAG, "IOException: " + e.getMessage());
+            return "IOException: ";
         } catch (Exception e) {
             Log.e(TAG, "Exception: " + e.getMessage());
+            return "Exception";
         }
         return response;
     }
