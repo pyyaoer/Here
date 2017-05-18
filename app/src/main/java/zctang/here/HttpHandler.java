@@ -7,15 +7,21 @@ package zctang.here;
 
 import android.util.Log;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.util.EntityUtils;
+
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.ProtocolException;
-import java.net.URL;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Ravi Tamada on 01/09/16.
@@ -24,49 +30,50 @@ import java.net.URL;
 public class HttpHandler {
 
     private static final String TAG = HttpHandler.class.getSimpleName();
-
+    private String charset = "UTF-8";
+    ;
     public HttpHandler() {
     }
 
-    public String makeServiceCall(String reqUrl) {
-        String response = null;
+    public String upvoteRequest(String reqUrl, String msgId) {
+        List<NameValuePair> params = new ArrayList<NameValuePair>();
+        params.add(new BasicNameValuePair("type", requestType.UPVOTE.toString()));
+        params.add(new BasicNameValuePair("msgid", msgId));
+
+        return makeServiceCall(reqUrl, params);
+    }
+
+    public String TestRequest(String reqUrl) {
+        List<NameValuePair> params = new ArrayList<NameValuePair>();
+        params.add(new BasicNameValuePair("type", requestType.TEST.toString()));
+
+        return makeServiceCall(reqUrl, params);
+    }
+
+    private String makeServiceCall(String reqUrl, List<NameValuePair> params) {
+        String result = null;
+        HttpPost httpPost = new HttpPost(reqUrl);
+
         try {
-            URL url = new URL(reqUrl);
-            HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
-            httpURLConnection.setRequestMethod("GET");
-            // read the response
-            InputStream in = new BufferedInputStream(httpURLConnection.getInputStream());
-            response = convertStreamToString(in);
-        } catch (MalformedURLException e) {
-            Log.e(TAG, "MalformedURLException: " + e.getMessage());
-        } catch (ProtocolException e) {
-            Log.e(TAG, "ProtocolException: " + e.getMessage());
+            HttpEntity httpEntity = new UrlEncodedFormEntity(params, charset);
+            httpPost.setEntity(httpEntity);
+            HttpClient httpClient = new DefaultHttpClient();
+            HttpResponse httpResponse = httpClient.execute(httpPost);
+
+            if (httpResponse.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+                result = EntityUtils.toString(httpResponse.getEntity());
+                Log.i(TAG, "Post result = " + result);
+            }
+        } catch (UnsupportedEncodingException e) {
+            Log.e(TAG, "UnsupportedEncodingException: " + e.getMessage());
         } catch (IOException e) {
             Log.e(TAG, "IOException: " + e.getMessage());
         } catch (Exception e) {
             Log.e(TAG, "Exception: " + e.getMessage());
         }
-        return response;
+        return result;
     }
 
-    private String convertStreamToString(InputStream is) {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-        StringBuilder sb = new StringBuilder();
+    private enum requestType {TEST, UPVOTE}
 
-        String line;
-        try {
-            while ((line = reader.readLine()) != null) {
-                sb.append(line).append('\n');
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                is.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        return sb.toString();
-    }
 }

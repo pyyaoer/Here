@@ -35,7 +35,7 @@ import org.json.JSONObject;
 public class MainActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener {
 
     // Fill in the URL of server
-    private static String mURL = "";
+    private static String mURL = "http://222.29.98.79/access_db/";
     MsgAdapter msgAdapter;
     String bestProvider;
     private String TAG = MainActivity.class.getSimpleName();
@@ -171,6 +171,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
     @Override
     public void onRefresh() {
         new GetMsgs().execute();
+        new UpVotes().execute(1);
     }
 
     class MsgAdapter extends ArrayAdapter<Msg> {
@@ -236,7 +237,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         @Override
         protected Void doInBackground(Void... params) {
             HttpHandler httpHandler = new HttpHandler();
-            String jsonStr = httpHandler.makeServiceCall(mURL);
+            String jsonStr = httpHandler.TestRequest(mURL);
 
             if (jsonStr != null) {
                 try {
@@ -271,6 +272,25 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
             }
             msgAdapter.notifyDataSetChanged();
             mSwipeRefreshLayout.setRefreshing(false);
+        }
+    }
+
+    private class UpVotes extends AsyncTask<Integer, Void, Void> {
+
+        @Override
+        protected void onPreExecute() {
+        }
+
+        @Override
+        protected Void doInBackground(Integer... params) {
+            HttpHandler httpHandler = new HttpHandler();
+            String jsonStr = httpHandler.upvoteRequest(mURL, params[0].toString());
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void result) {
+            super.onPostExecute(result);
         }
     }
 }
