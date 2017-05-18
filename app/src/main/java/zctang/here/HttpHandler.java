@@ -5,6 +5,7 @@ package zctang.here;
  * Learn from blog http://www.androidhive.info/2012/01/android-json-parsing-tutorial/
  */
 
+import android.location.Location;
 import android.util.Log;
 
 import org.apache.http.HttpEntity;
@@ -43,6 +44,25 @@ public class HttpHandler {
         return makeServiceCall(reqUrl, params);
     }
 
+    public String newMsgRequest(String reqUrl, String msgText, Location location) {
+        List<NameValuePair> params = new ArrayList<NameValuePair>();
+        params.add(new BasicNameValuePair("type", requestType.NEWMSG.toString()));
+        params.add(new BasicNameValuePair("msgtext", msgText));
+        params.add(new BasicNameValuePair("latitude", "" + location.getLatitude()));
+        params.add(new BasicNameValuePair("longitude", "" + location.getLongitude()));
+
+        return makeServiceCall(reqUrl, params);
+    }
+
+    public String getMsgRequest(String reqUrl, Location location) {
+        List<NameValuePair> params = new ArrayList<NameValuePair>();
+        params.add(new BasicNameValuePair("type", requestType.GETMSG.toString()));
+        params.add(new BasicNameValuePair("latitude", "" + location.getLatitude()));
+        params.add(new BasicNameValuePair("longitude", "" + location.getLongitude()));
+
+        return makeServiceCall(reqUrl, params);
+    }
+
     public String TestRequest(String reqUrl) {
         List<NameValuePair> params = new ArrayList<NameValuePair>();
         params.add(new BasicNameValuePair("type", requestType.TEST.toString()));
@@ -69,11 +89,14 @@ public class HttpHandler {
         } catch (IOException e) {
             Log.e(TAG, "IOException: " + e.getMessage());
         } catch (Exception e) {
-            Log.e(TAG, "Exception: " + e.getMessage());
+            e.printStackTrace();
+//            Log.e(TAG, "Exception: " + );
         }
         return result;
     }
 
-    private enum requestType {TEST, UPVOTE}
+    private enum requestType {TEST, UPVOTE, NEWMSG, GETMSG}
+
+    ;
 
 }

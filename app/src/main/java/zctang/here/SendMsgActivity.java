@@ -2,7 +2,6 @@ package zctang.here;
 
 import android.Manifest;
 import android.content.Context;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Criteria;
 import android.location.Location;
@@ -10,37 +9,25 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.annotation.LayoutRes;
-import android.support.annotation.NonNull;
-import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
-import android.widget.ListView;
-import android.widget.TextView;
+import android.widget.Button;
+import android.widget.EditText;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+/**
+ * Created by wangxiaoyang01 on 2017/5/19.
+ */
 
+public class SendMsgActivity extends AppCompatActivity {
 
-public class MainActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener {
-
-    // Fill in the URL of server
     private static String mURL = "";
-    MsgAdapter msgAdapter;
     String bestProvider;
     private String TAG = MainActivity.class.getSimpleName();
-    private ListView mListView;
-    private SwipeRefreshLayout mSwipeRefreshLayout;
     private Location currentLocation;
     private final LocationListener locationListener = new LocationListener() {
         @Override
@@ -68,7 +55,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.new_msg);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -91,24 +78,14 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
             locationManager.requestLocationUpdates(bestProvider, 1000, 1, locationListener);
         }
 
-        mSwipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.include);
-        mSwipeRefreshLayout.setOnRefreshListener(this);
-
-        mListView = (ListView) findViewById(R.id.msg_listview);
-
-        msgAdapter = new MsgAdapter(this, R.layout.msg_layout);
-        msgAdapter.add(new Msg("First", "1:00", "upvote"));
-        msgAdapter.add(new Msg("Second", "2:00", "upvote"));
-
-        mListView.setAdapter(msgAdapter);
-
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
+        Button button = (Button) findViewById(R.id.send_msg);
+        button.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view) {
-                Intent intent = new Intent();
-                intent.setClass(MainActivity.this, SendMsgActivity.class);
-                MainActivity.this.startActivity(intent);
+            public void onClick(View v) {
+                EditText editText = (EditText) findViewById(R.id.input_msg);
+                String msgContent = editText.getText().toString();
+                Log.v(TAG, "Sending Message: " + msgContent);
+                new SendMsgs().execute(msgContent);
             }
         });
     }
@@ -169,99 +146,17 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         return super.onOptionsItemSelected(item);
     }
 
-    @Override
-    public void onRefresh() {
-        new GetMsgs().execute();
-        new UpVotes().execute(2);
-    }
-
-    class MsgAdapter extends ArrayAdapter<Msg> {
-        private int mResourceId;
-
-        public MsgAdapter(@NonNull Context context, @LayoutRes int resource) {
-            super(context, resource);
-            this.mResourceId = resource;
-        }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            Msg msg = getItem(position);
-            LayoutInflater inflater = getLayoutInflater();
-            View view = inflater.inflate(mResourceId, parent, false);
-            TextView msgText = (TextView) view.findViewById(R.id.msg_content);
-            TextView timeText = (TextView) view.findViewById(R.id.time_content);
-            TextView upvoteText = (TextView) view.findViewById(R.id.upvote_content);
-
-            if (msg != null) {
-                msgText.setText(msg.getMsg());
-                timeText.setText(msg.getTime());
-                upvoteText.setText(msg.getUpvote());
-            }
-
-            return view;
-        }
-    }
-
-    private class GetMsgs extends AsyncTask<Void, Void, Void> {
-
-        private JSONArray jsonArray = null;
-
-        @Override
-        protected void onPreExecute() {
-            mSwipeRefreshLayout.setRefreshing(true);
-        }
-
-        @Override
-        protected Void doInBackground(Void... params) {
-            HttpHandler httpHandler = new HttpHandler();
-            String jsonStr = httpHandler.TestRequest(mURL);
-
-            if (jsonStr != null) {
-                try {
-                    jsonArray = new JSONArray(jsonStr);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void result) {
-            super.onPostExecute(result);
-            if (jsonArray != null) {
-                msgAdapter.clear();
-                for (int i = 0; i < jsonArray.length(); i++) {
-                    try {
-                        JSONObject jsonObject = jsonArray.getJSONObject(i);
-                        msgAdapter.add(new Msg(jsonObject.getString("content"),
-                                jsonObject.getString("time"),
-                                jsonObject.getString("upvote")));
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-            // TODO: show Location information in the last Msg
-            if (currentLocation != null) {
-                msgAdapter.add(new Msg(currentLocation.toString(), "0:00", "0"));
-            }
-            msgAdapter.notifyDataSetChanged();
-            mSwipeRefreshLayout.setRefreshing(false);
-        }
-    }
-
-    private class UpVotes extends AsyncTask<Integer, Void, Void> {
+    private class SendMsgs extends AsyncTask<String, Void, Void> {
 
         @Override
         protected void onPreExecute() {
         }
 
         @Override
-        protected Void doInBackground(Integer... params) {
+        protected Void doInBackground(String... params) {
             HttpHandler httpHandler = new HttpHandler();
-            String jsonStr = httpHandler.upvoteRequest(mURL, params[0].toString());
+            httpHandler.newMsgRequest(mURL, params[0], currentLocation);
+
             return null;
         }
 
@@ -270,4 +165,5 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
             super.onPostExecute(result);
         }
     }
+
 }
