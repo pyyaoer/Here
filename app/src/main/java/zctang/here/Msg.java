@@ -5,11 +5,16 @@ package zctang.here;
  */
 
 class Msg {
+
+    private boolean upvoted;
+    private String id;
     private String msg;
     private String time;
     private String upvote;
 
-    public Msg(String content, String time, String upvote) {
+    public Msg(String id, String content, String time, String upvote) {
+        this.upvoted = false;
+        this.id = id;
         this.msg = content;
         this.time = time;
         this.upvote = upvote;
@@ -25,5 +30,17 @@ class Msg {
 
     public String getUpvote() {
         return upvote;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public boolean isUpvoted() {
+        return upvoted;
+    }
+
+    public void setUpvoted(boolean upvoted) {
+        this.upvoted = upvoted;
     }
 }

@@ -53,6 +53,7 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:background="@drawable/upvote_border"
+            android:focusable="false"
             app:srcCompat="@android:drawable/arrow_up_float" />
 
     </LinearLayout>

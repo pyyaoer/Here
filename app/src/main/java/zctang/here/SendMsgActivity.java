@@ -25,7 +25,7 @@ import android.widget.EditText;
 
 public class SendMsgActivity extends AppCompatActivity {
 
-    private static String mURL = "";
+    private static String mURL = "http://222.29.98.79/access_db/";
     String bestProvider;
     private String TAG = MainActivity.class.getSimpleName();
     private Location currentLocation;
