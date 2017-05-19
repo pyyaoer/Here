@@ -157,6 +157,8 @@ public class SendMsgActivity extends AppCompatActivity {
             HttpHandler httpHandler = new HttpHandler();
             httpHandler.newMsgRequest(mURL, params[0], currentLocation);
 
+            SendMsgActivity.this.finish();
+
             return null;
         }
 

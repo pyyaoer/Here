@@ -57,9 +57,14 @@ public class HttpHandler {
     public String getMsgRequest(String reqUrl, Location location, Integer threshold) {
         List<NameValuePair> params = new ArrayList<NameValuePair>();
         params.add(new BasicNameValuePair("type", requestType.GETMSG.toString()));
-        params.add(new BasicNameValuePair("latitude", "" + location.getLatitude()));
-        params.add(new BasicNameValuePair("longitude", "" + location.getLongitude()));
         params.add(new BasicNameValuePair("threshold", "" + threshold));
+        if (location != null) {
+            params.add(new BasicNameValuePair("latitude", "" + location.getLatitude()));
+            params.add(new BasicNameValuePair("longitude", "" + location.getLongitude()));
+        } else {
+            params.add(new BasicNameValuePair("latitude", "0"));
+            params.add(new BasicNameValuePair("longitude", "0"));
+        }
 
         return makeServiceCall(reqUrl, params);
     }
